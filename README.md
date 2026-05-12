@@ -1,17 +1,17 @@
-# Copy Fail - CVE-2026-31431 PoC
+# Copy Fail - CVE-2026-31431 PoC in C
 
-Local privilege escalation exploit for **CVE-2026-31431** (Copy Fail), a logic bug in the Linux kernel's `authencesn` cryptographic template that allows an unprivileged local user to perform a controlled 4-byte write into the page cache of any readable file.
+Local privilege escalation exploit for **CVE-2026-31431** (Copy Fail), written in C.
 
 
 ## How It Works
 
-1. **ELF parsing** — resolves `/usr/bin/su`'s entry point virtual address to a file offset via `PT_LOAD` program headers
-2. **AF_ALG setup** — binds to `authencesn(hmac(sha256),cbc(aes))` with a zero key
-3. **4-byte page cache writes** — for each chunk of the shellcode payload:
+1. **ELF parsing**: resolves `/usr/bin/su`'s entry point virtual address to a file offset via `PT_LOAD` program headers
+2. **AF_ALG setup**: binds to `authencesn(hmac(sha256),cbc(aes))` with a zero key
+3. **4-byte page cache writes**: for each chunk of the shellcode payload:
    - `sendmsg()` sends AAD with the shellcode bytes as `seqno_lo` (bytes 4-7), with `MSG_MORE`
    - `splice()` delivers 32 bytes of the target file's page cache pages as the AEAD authentication tag
-   - `recv()` triggers decryption — `authencesn`'s scratch write lands in the chained page cache pages, writing 4 controlled bytes. The HMAC verification fails (EBADMSG) but the write persists
-4. **Privilege escalation** — `execl("/usr/bin/su")` loads the corrupted page cache. The 40-byte shellcode (`setuid(0)` + `execve("/bin/sh")`) runs as setuid-root
+   - `recv()` triggers decryption,`authencesn`'s scratch write lands in the chained page cache pages, writing 4 controlled bytes.
+4. **Privilege escalation**: `execl("/usr/bin/su")` loads the corrupted page cache. The 40-byte shellcode (`setuid(0)` + `execve("/bin/sh")`) runs as setuid-root
 
 ## Shellcode
 
