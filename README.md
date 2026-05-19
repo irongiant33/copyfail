@@ -1,4 +1,26 @@
-# Copy Fail - CVE-2026-31431 PoC in C
+# ITSA Copy Fail Attempt to Axis Camera
+
+List of repositories I tried:
+- https://github.com/tgies/copy-fail-c (C)
+- https://github.com/xeloxa/copyfail-exploit (Python)
+- https://github.com/astounds/copy-fail-CVE-2026-31431 (Python)
+- https://github.com/irongiant33/copyfail# (C)
+
+None of the methods were successful on the Axis camera. The best progress I got is that trying to run `su` on the Axis camera before the exploit would yield an output of "You don't have the permission to do this" and after running the exploit I would get a "Segmentation Fault, Core Dumped"
+
+For Axis cross-compiling, I used two approaches:
+- Download the armv7hf Dockerfile from https://github.com/AxisCommunications/acap-native-sdk 
+   - locally built with docker build -t axis-armv7 .
+   - locally ran with `docker run -it -v C:\Users\samu\Documents\copyfail:/tmp axis-armv7` where the file location is a local mount point where I uploaded the repository code
+   - compiled C code with `${CC} sourcefile.c -o outputexecutable` within the Docker container
+   - from there, I uploaded the file to GitHub, downloaded on the Raspberry Pi, and scp'ed over to the Axis camera
+- Try to run pyinstaller from an armv7l architecture in a Docker container so that it would bundle the Python repositories into a single executable on ARM
+    - `docker run --rm --privileged multiarch/qemu-user-static --reset -p yes`
+    - `docker run --rm -it --platform linux/arm/v7 -v C:\Users\samue\Documents\copyfail:/tmp arm32v7/python`
+    - `pip install pyinstaller && pyinstaller --onefile source.py`
+    - Then uploading the file to GitHub, downloading it on the Raspberry Pi, and scp'ed over to the Axis camera
+
+## Copy Fail - CVE-2026-31431 PoC in C
 
 Local privilege escalation exploit for **CVE-2026-31431** (Copy Fail), written in C.
 
